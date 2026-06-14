@@ -9,9 +9,16 @@
 #   HORN_REGISTRY_USER   user that owns a token with write:package
 #   HORN_REGISTRY_TOKEN  that token
 #
-# Server-side prerequisite: the runner's Docker daemon must trust the *.horn CA
-# for git.horn — add `git.horn` to FORGEJO_RUNNER_DOCKER_CA_HOSTS in the git
-# stack's .env and redeploy the runner. Otherwise the push fails with x509.
+# Server-side prerequisites on the Forgejo runner's dind:
+#   1. Trust the *.horn CA for git.horn — add `git.horn` to
+#      FORGEJO_RUNNER_DOCKER_CA_HOSTS in the git stack's .env and redeploy.
+#      Otherwise the push fails with x509.
+#   2. Enable the containerd image store (dind started with
+#      `--feature containerd-snapshotter=true`). This lets the *default* builder
+#      multi-arch-build and push through the daemon, which already resolves
+#      git.horn and trusts its CA. (A docker-container builder would spawn a
+#      nested buildkit with neither — public-DNS fallback + no CA.) The build
+#      step below pins BEETDECK_BUILDER=default to use this path.
 name: release (git.horn)
 
 on:
@@ -55,4 +62,10 @@ jobs:
         env:
           BEETDECK_IMAGES: "git.horn/beetdeck/app"
           BEETDECK_TAGS: "${{ steps.ver.outputs.version }} latest"
+          # Build/push through the dind daemon's default builder (containerd
+          # image store enabled on the runner). A docker-container builder would
+          # spawn a nested buildkit that can't resolve the internal git.horn
+          # (falls back to public DNS) nor trust its CA. The daemon already has
+          # both — see the runner's dind --feature containerd-snapshotter.
+          BEETDECK_BUILDER: default
         run: ./build.sh

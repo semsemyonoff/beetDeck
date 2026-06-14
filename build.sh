@@ -56,11 +56,24 @@ done
 echo ">> building ${PLATFORMS} (APP_VERSION=${VERSION}) and pushing:"
 printf '   %s\n' "${refs[@]}"
 
-BUILDER="beetDeck-multiarch"
-if ! docker buildx inspect "$BUILDER" &>/dev/null; then
-    docker buildx create --name "$BUILDER" --use
+# Pick the buildx builder.
+#   BEETDECK_BUILDER set  -> use it as-is (e.g. "default" on a daemon with the
+#                            containerd image store, which multi-arch-builds and
+#                            pushes through the daemon itself — so it inherits the
+#                            daemon's DNS and registry CA trust; needed for the
+#                            internal git.horn push from the Forgejo dind runner).
+#   unset                 -> manage a docker-container builder, required where the
+#                            default builder can't do multi-arch (GitHub runners,
+#                            local Docker without the containerd store).
+if [ -n "${BEETDECK_BUILDER:-}" ]; then
+    docker buildx use "$BEETDECK_BUILDER"
 else
-    docker buildx use "$BUILDER"
+    BUILDER="beetDeck-multiarch"
+    if ! docker buildx inspect "$BUILDER" &>/dev/null; then
+        docker buildx create --name "$BUILDER" --use
+    else
+        docker buildx use "$BUILDER"
+    fi
 fi
 
 docker buildx build \

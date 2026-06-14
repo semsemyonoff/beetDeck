@@ -1,0 +1,149 @@
+# "Cut release" — the one button that starts a release. Run it from the Forgejo
+# UI (Actions → Cut release → Run workflow), pick a bump, and it:
+#   1. repins backend/frontend submodules to their latest tag (or the ref you give)
+#   2. bumps VERSION (semver: patch/minor/major)
+#   3. appends an auto-generated CHANGELOG section from each submodule's commit range
+#   4. commits "release: X.Y.Z" and tags vX.Y.Z, then pushes
+#
+# The tag fans out to the build pipelines: .forgejo/workflows/release.yml
+# (git.horn) and, via the push mirror, .github/workflows/release.yml (Docker Hub
+# + GHCR). It MUST run on Forgejo because the mirror is one-way (Forgejo → GitHub),
+# so the tag has to originate here.
+#
+# Required Forgejo Actions secret:
+#   RELEASE_TOKEN  a PAT with write access to this repo. Used to push the commit
+#                  and tag. It must be a PAT (not the automatic Actions token):
+#                  pushes by the auto token do NOT trigger the build workflows.
+name: Cut release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Semver bump"
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      backend_ref:
+        description: "backend ref to ship (blank = its latest semver tag)"
+        required: false
+        default: ""
+      frontend_ref:
+        description: "frontend ref to ship (blank = its latest semver tag)"
+        required: false
+        default: ""
+
+jobs:
+  cut:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          # PAT so the resulting tag push triggers the build workflows.
+          token: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "beetDeck release bot"
+          git config user.email "release-bot@git.horn"
+
+      - name: Repin submodules to their tags
+        id: pins
+        run: |
+          set -euo pipefail
+          repin() {  # $1=path  $2=requested ref (may be empty)
+            local path="$1" ref="$2"
+            git -C "$path" fetch --tags --force origin
+            git -C "$path" fetch --force --unshallow origin 2>/dev/null || true
+            if [ -z "$ref" ]; then
+              ref="$(git -C "$path" tag --list --sort=-v:refname \
+                     | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)"
+            fi
+            test -n "$ref" || { echo "ERROR: no semver tag in $path and no ref given" >&2; exit 1; }
+            printf '%s' "$ref"
+          }
+          back_old="$(git -C backend  rev-parse HEAD)"
+          front_old="$(git -C frontend rev-parse HEAD)"
+          back_ref="$(repin  backend  '${{ inputs.backend_ref }}')"
+          front_ref="$(repin frontend '${{ inputs.frontend_ref }}')"
+          git -C backend  checkout --detach "$back_ref"
+          git -C frontend checkout --detach "$front_ref"
+          git add backend frontend
+          {
+            echo "back_old=$back_old"
+            echo "front_old=$front_old"
+            echo "back_ref=$back_ref"
+            echo "front_ref=$front_ref"
+          } >> "$GITHUB_OUTPUT"
+          echo "backend  -> $back_ref"
+          echo "frontend -> $front_ref"
+
+      - name: Bump VERSION
+        id: ver
+        run: |
+          set -euo pipefail
+          cur="$(cat VERSION 2>/dev/null || echo 0.0.0)"
+          IFS=. read -r MA MI PA <<< "$cur"
+          case "${{ inputs.bump }}" in
+            major) MA=$((MA+1)); MI=0; PA=0 ;;
+            minor) MI=$((MI+1)); PA=0 ;;
+            patch) PA=$((PA+1)) ;;
+          esac
+          new="${MA}.${MI}.${PA}"
+          echo "$new" > VERSION
+          echo "version=$new" >> "$GITHUB_OUTPUT"
+          echo "VERSION: $cur -> $new"
+
+      - name: Generate CHANGELOG section
+        run: |
+          set -euo pipefail
+          new="${{ steps.ver.outputs.version }}"
+          today="$(date +%Y-%m-%d)"
+          {
+            printf '\n## [%s] - %s\n\n' "$new" "$today"
+            printf '### backend (%s)\n' "${{ steps.pins.outputs.back_ref }}"
+            git -C backend log --no-merges --pretty='- %s' \
+              "${{ steps.pins.outputs.back_old }}..HEAD" 2>/dev/null | grep . || echo '- (no changes)'
+            printf '\n### frontend (%s)\n' "${{ steps.pins.outputs.front_ref }}"
+            git -C frontend log --no-merges --pretty='- %s' \
+              "${{ steps.pins.outputs.front_old }}..HEAD" 2>/dev/null | grep . || echo '- (no changes)'
+          } > /tmp/section.md
+          marker='<!-- release-cut inserts new versions below this line -->'
+          grep -qF "$marker" CHANGELOG.md || { echo "ERROR: CHANGELOG marker missing" >&2; exit 1; }
+          awk -v f=/tmp/section.md -v m="$marker" '
+            { print }
+            index($0, m) { while ((getline line < f) > 0) print line }
+          ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+
+      - name: Commit, tag, push
+        run: |
+          set -euo pipefail
+          new="${{ steps.ver.outputs.version }}"
+          git add VERSION CHANGELOG.md backend frontend
+          git commit -m "release: ${new}"
+          git tag -a "v${new}" -m "beetDeck ${new}"
+          git push origin "HEAD:${{ github.ref_name }}"
+          git push origin "v${new}"
+          echo "Released v${new} — build pipelines will pick up the tag."
+
+      - name: Create Forgejo release
+        env:
+          TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          set -euo pipefail
+          new="${{ steps.ver.outputs.version }}"
+          # Body = the CHANGELOG section generated earlier (/tmp/section.md).
+          payload="$(jq -n --arg tag "v${new}" --arg name "beetDeck ${new}" \
+            --rawfile body /tmp/section.md '{tag_name:$tag, name:$name, body:$body}')"
+          code="$(curl -sS -o /tmp/release.json -w '%{http_code}' \
+            -X POST "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/releases" \
+            -H "Authorization: token ${TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "${payload}")"
+          echo "Forgejo releases API → HTTP ${code}"
+          case "${code}" in
+            201) echo "Forgejo release v${new} created." ;;
+            *) cat /tmp/release.json >&2; echo "ERROR: Forgejo release create failed" >&2; exit 1 ;;
+          esac

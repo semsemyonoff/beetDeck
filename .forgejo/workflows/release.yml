@@ -1,0 +1,46 @@
+# Internal release build — runs on the Forgejo runner (miniPC) when a vX.Y.Z tag
+# arrives. Builds the multi-arch image from the pinned submodules and pushes it
+# to your own infra: the Forgejo container registry at git.horn/beetdeck/app.
+#
+# GitHub never sees this file (it only scans .github/workflows). The public
+# registries are handled by .github/workflows/release.yml.
+#
+# Required Forgejo Actions secrets (names must NOT start with FORGEJO_/GITEA_/GITHUB_):
+#   HORN_REGISTRY_USER   user that owns a token with write:package
+#   HORN_REGISTRY_TOKEN  that token
+#
+# Server-side prerequisite: the runner's Docker daemon must trust the *.horn CA
+# for git.horn — add `git.horn` to FORGEJO_RUNNER_DOCKER_CA_HOSTS in the git
+# stack's .env and redeploy the runner. Otherwise the push fails with x509.
+name: release (git.horn)
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Derive version from tag
+        id: ver
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-qemu-action@v3
+
+      - name: Log in to git.horn (Forgejo registry)
+        uses: docker/login-action@v3
+        with:
+          registry: git.horn
+          username: ${{ secrets.HORN_REGISTRY_USER }}
+          password: ${{ secrets.HORN_REGISTRY_TOKEN }}
+
+      - name: Build & push (git.horn/beetdeck/app)
+        env:
+          BEETDECK_IMAGES: "git.horn/beetdeck/app"
+          BEETDECK_TAGS: "${{ steps.ver.outputs.version }} latest"
+        run: ./build.sh

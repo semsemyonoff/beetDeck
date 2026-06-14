@@ -2,17 +2,22 @@
 #
 # Two audiences:
 #   - Operators self-hosting a published image: `make up` / `make down` / `make pull` / `make logs`.
-#   - Maintainers cutting a release: `make release VERSION=1.0.0` builds the image
-#     (SPA + API, multi-arch) from the PINNED submodules and pushes it.
+#   - Maintainers cutting a release: normally via CI — the "Cut release" button
+#     (.forgejo/workflows/release-cut.yml) tags vX.Y.Z, which fans out to the
+#     build pipelines (GitHub → Docker Hub + GHCR; Forgejo → git.horn). See README.
+#     `make release VERSION=1.0.0` remains a LOCAL FALLBACK that builds the same
+#     image (SPA + API, multi-arch) from the PINNED submodules and pushes it.
 #
 # The submodules (backend/, frontend/) pin the exact commits a release is built
-# from — one product version = one (backend, frontend) pair. Update them, bump
-# VERSION, then `make release`. The build is self-contained (see Dockerfile);
-# it does NOT need the DWE dev stack.
+# from — one product version = one (backend, frontend) pair. The build is
+# self-contained (see Dockerfile); it does NOT need the DWE dev stack.
 
 SHELL := /bin/bash
 
-IMAGE   ?= semsemyonoff/beetdeck
+# Local fallback target list. CI passes its own BEETDECK_IMAGES (GitHub →
+# Docker Hub + GHCR; Forgejo → git.horn/beetdeck/app). See build.sh.
+IMAGES  ?= semsemyonoff/beetdeck
+IMAGE   ?= $(firstword $(IMAGES))
 VERSION ?= $(shell cat VERSION 2>/dev/null)
 
 .PHONY: help up down restart pull logs ps submodules release release-local
@@ -46,11 +51,9 @@ ps: ## Show container status
 submodules: ## Init/update the pinned backend & frontend submodules
 	git submodule update --init --recursive
 
-release: submodules ## Build multi-arch image VERSION + latest and push (VERSION=x.y.z)
+release: submodules ## Build multi-arch image VERSION + latest and push (VERSION=x.y.z). CI is the primary path; this is a local fallback.
 	@test -n "$(VERSION)" || { echo "ERROR: set VERSION (or write it to ./VERSION)" >&2; exit 1; }
-	@echo ">> building & pushing $(IMAGE):$(VERSION) (+ latest)"
-	BEETDECK_IMAGE="$(IMAGE)" BEETDECK_TAG="$(VERSION)" ./build.sh
-	BEETDECK_IMAGE="$(IMAGE)" BEETDECK_TAG="latest"     ./build.sh
+	BEETDECK_IMAGES="$(IMAGES)" BEETDECK_TAGS="$(VERSION) latest" ./build.sh
 
 release-local: submodules ## Build a single-arch image locally (no push) for testing
 	@test -n "$(VERSION)" || { echo "ERROR: set VERSION" >&2; exit 1; }

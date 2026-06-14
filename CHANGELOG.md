@@ -11,42 +11,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 Umbrella-level notes for the next release go here (CI, compose, docs). The
-"Cut release" workflow appends an auto-generated, submodule-derived section
-below the marker — keep hand-written notes up here.
-
-### Added
-- Initial deployment repository: production `docker-compose.yml`, `.env.example`,
-  `config.yaml.example`, release `Makefile`, and pinned `backend`/`frontend`
-  submodules.
-- Self-contained multi-stage `Dockerfile` (SPA build + backend runtime) and
-  `build.sh`, moved out of the backend repo — the release image now builds
-  entirely from this repo, with no dependency on the DWE dev stack.
-- Hybrid release CI: `make release` is now a fallback; tagging `vX.Y.Z` (via the
-  "Cut release" button) builds and pushes to Docker Hub + GHCR (GitHub Actions)
-  and `git.horn/beetdeck/app` (Forgejo Actions).
+"Cut release" workflow appends an auto-generated, submodule-derived draft below
+the marker — rewrite it into human-readable notes before publishing.
 
 <!-- release-cut inserts new versions below this line -->
 
 ## [0.1.0] - 2026-06-14
 
-### backend (v0.1.0)
-- style: apply ruff format to schemas and tests
-- feat: report product release version as OpenAPI info.version
-- fix: address code review findings
-- fix: address code review findings
-- docs: retire manual API table, document OpenAPI/Scalar + schemas
-- feat: Task 11 — standardize 422 validation-error contract
-- feat: Task 10 — annotate scan blueprint (spectree validation)
-- feat: Task 9 — annotate items blueprint (spectree validation)
-- feat: Task 8 — annotate identify blueprint (spectree validation)
-- feat: Task 7 — annotate lyrics blueprint (spectree validation)
-- feat: Task 6 — annotate genres blueprint (spectree validation)
-- feat: Task 5 — annotate cover blueprint (spectree validation)
-- feat: Task 4 — annotate albums blueprint (spectree validation)
-- feat: Task 3 — annotate library blueprint (spectree validation)
-- feat: Task 2 — shared schemas (error model + common types)
-- feat: Task 1 — bootstrap SpecTree singleton + Scalar viewer
-- docs: scope README to the backend part, point to deploy entry point
+Initial release of **beetDeck** — a web interface for managing a
+[beets](https://beets.io/) music library: identification (MusicBrainz), genres
+(Last.fm), cover art, lyrics, and tag browsing on top of an existing library.
 
-### frontend (v0.1.0)
-- (no changes)
+Ships as a single multi-arch image built from `backend` v0.1.0 and `frontend`
+v0.1.0, published to Docker Hub, GHCR, and `git.horn/beetdeck/app`.
+
+### Added
+- First release with the full feature set: library browser, per-artist and
+  album pages, MusicBrainz identify, Last.fm genre tagging, cover art, lyrics
+  (lrclib), library rescan, untagged-file triage, in-place tag editing,
+  full-text search, and a light/dark theme.
+- Deployment layer: production `docker-compose.yml`, `.env.example`,
+  `config.yaml.example`, a release `Makefile`, and pinned `backend`/`frontend`
+  submodules built into one image.
+- Self-contained multi-stage `Dockerfile` (SPA build + backend runtime) — the
+  release image builds entirely from this repo, with no dependency on the dev
+  stack.
+- Hybrid release CI: the "Cut release" button builds a multi-arch image and
+  pushes it to Docker Hub + GHCR (GitHub Actions) and `git.horn/beetdeck/app`
+  (Forgejo Actions).

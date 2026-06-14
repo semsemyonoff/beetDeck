@@ -26,3 +26,27 @@ below the marker — keep hand-written notes up here.
   and `git.horn/beetdeck/app` (Forgejo Actions).
 
 <!-- release-cut inserts new versions below this line -->
+
+## [0.1.0] - 2026-06-14
+
+### backend (v0.1.0)
+- style: apply ruff format to schemas and tests
+- feat: report product release version as OpenAPI info.version
+- fix: address code review findings
+- fix: address code review findings
+- docs: retire manual API table, document OpenAPI/Scalar + schemas
+- feat: Task 11 — standardize 422 validation-error contract
+- feat: Task 10 — annotate scan blueprint (spectree validation)
+- feat: Task 9 — annotate items blueprint (spectree validation)
+- feat: Task 8 — annotate identify blueprint (spectree validation)
+- feat: Task 7 — annotate lyrics blueprint (spectree validation)
+- feat: Task 6 — annotate genres blueprint (spectree validation)
+- feat: Task 5 — annotate cover blueprint (spectree validation)
+- feat: Task 4 — annotate albums blueprint (spectree validation)
+- feat: Task 3 — annotate library blueprint (spectree validation)
+- feat: Task 2 — shared schemas (error model + common types)
+- feat: Task 1 — bootstrap SpecTree singleton + Scalar viewer
+- docs: scope README to the backend part, point to deploy entry point
+
+### frontend (v0.1.0)
+- (no changes)

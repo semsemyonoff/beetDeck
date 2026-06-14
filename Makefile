@@ -57,4 +57,4 @@ release: submodules ## Build multi-arch image VERSION + latest and push (VERSION
 
 release-local: submodules ## Build a single-arch image locally (no push) for testing
 	@test -n "$(VERSION)" || { echo "ERROR: set VERSION" >&2; exit 1; }
-	docker build -t "$(IMAGE):$(VERSION)" .
+	docker build --build-arg "APP_VERSION=$(VERSION)" -t "$(IMAGE):$(VERSION)" .

@@ -10,6 +10,11 @@
 #                     with every BEETDECK_TAGS value in a single buildx --push,
 #                     so the image is built ONCE and fanned out to all targets.
 #   BEETDECK_TAGS     space-separated list of tags (default: latest)
+#   BEETDECK_VERSION  product version baked into the image as APP_VERSION (the
+#                     backend reports it as the OpenAPI info.version). Defaults to
+#                     the first non-"latest" tag, then to ./VERSION, then 0.0.0 —
+#                     so CI needs no extra wiring (the release version is already
+#                     the first BEETDECK_TAGS value).
 #   BEETDECK_PLATFORMS  buildx platforms (default: linux/amd64,linux/arm64)
 #
 # `docker login` to each target registry must already be done by the caller.
@@ -20,6 +25,17 @@ cd "$(dirname "$0")"
 IMAGES="${BEETDECK_IMAGES:-${BEETDECK_IMAGE:-semsemyonoff/beetdeck}}"
 TAGS="${BEETDECK_TAGS:-${BEETDECK_TAG:-latest}}"
 PLATFORMS="${BEETDECK_PLATFORMS:-linux/amd64,linux/arm64}"
+
+# Product version baked into the image (APP_VERSION). Prefer an explicit
+# BEETDECK_VERSION; otherwise take the first tag that isn't "latest" (CI passes
+# "$version latest"), then fall back to ./VERSION, then 0.0.0.
+VERSION="${BEETDECK_VERSION:-}"
+if [ -z "$VERSION" ]; then
+    for t in $TAGS; do
+        if [ "$t" != latest ]; then VERSION="$t"; break; fi
+    done
+fi
+VERSION="${VERSION:-$(cat VERSION 2>/dev/null || echo 0.0.0)}"
 
 for sub in backend frontend; do
     if [ ! -e "$sub/.git" ]; then
@@ -37,7 +53,7 @@ for img in $IMAGES; do
         refs+=( "${img}:${t}" )
     done
 done
-echo ">> building ${PLATFORMS} and pushing:"
+echo ">> building ${PLATFORMS} (APP_VERSION=${VERSION}) and pushing:"
 printf '   %s\n' "${refs[@]}"
 
 BUILDER="beetDeck-multiarch"
@@ -49,5 +65,6 @@ fi
 
 docker buildx build \
     --platform "$PLATFORMS" \
+    --build-arg "APP_VERSION=${VERSION}" \
     "${tag_args[@]}" \
     --push .

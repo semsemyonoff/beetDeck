@@ -43,6 +43,15 @@ RUN mkdir -p /tmp/beetdeck && chmod 1777 /tmp/beetdeck
 EXPOSE 5000
 ENV TMPDIR=/tmp/beetdeck
 
+# Product release version, baked at build time (build.sh passes the release tag,
+# e.g. 1.2.3). The backend reads APP_VERSION at startup and reports it as the
+# OpenAPI info.version (/apidoc/openapi.json, Scalar header). No git history is
+# needed in the image — .dockerignore strips .git, so the version is injected
+# here instead of derived from a tag at runtime. Defaults to 0.0.0 for plain
+# `docker build` without --build-arg.
+ARG APP_VERSION=0.0.0
+ENV APP_VERSION=$APP_VERSION
+
 # Single worker is mandatory: the app shares in-memory state across request
 # threads (scan/identify tasks). Scale with threads, never workers.
 CMD ["gunicorn", "-b", "0.0.0.0:5000", "-w", "1", "--threads", "4", "--worker-tmp-dir", "/tmp/beetdeck", "app:app"]

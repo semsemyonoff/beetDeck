@@ -23,8 +23,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+        # NB: no `submodules: recursive` here. .gitmodules points at GitHub
+        # (public default), and actions/checkout's submodule auth does not
+        # rewrite https://github.com/ — on this runner that would try to clone
+        # from the not-yet-existing public repos and fail. Instead we init the
+        # submodules in the next step, rewriting the URLs to git.horn (where the
+        # repos are public, so no token is needed).
+
+      - name: Init submodules from git.horn
+        run: |
+          git config --global \
+            url."https://git.horn/beetDeck/".insteadOf \
+            "https://github.com/semsemyonoff/beetDeck-"
+          git submodule sync --recursive
+          git submodule update --init --recursive
 
       - name: Derive version from tag
         id: ver

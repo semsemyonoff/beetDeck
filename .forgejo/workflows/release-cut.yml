@@ -40,7 +40,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: recursive
+          # No `submodules: recursive`: .gitmodules points at GitHub (public
+          # default), which actions/checkout cannot rewrite to git.horn and the
+          # public repos don't exist yet. We init them ourselves below.
           # PAT so the resulting tag push triggers the build workflows.
           token: ${{ secrets.RELEASE_TOKEN }}
 
@@ -48,6 +50,17 @@ jobs:
         run: |
           git config user.name  "beetDeck release bot"
           git config user.email "release-bot@git.horn"
+
+      - name: Init submodules from git.horn
+        run: |
+          # Rewrite the GitHub submodule URLs to git.horn (repos are public
+          # there, so no token needed). The rewrite is global, so the later
+          # `git -C backend fetch origin` in the repin step also hits git.horn.
+          git config --global \
+            url."https://git.horn/beetDeck/".insteadOf \
+            "https://github.com/semsemyonoff/beetDeck-"
+          git submodule sync --recursive
+          git submodule update --init --recursive
 
       - name: Repin submodules to their tags
         id: pins

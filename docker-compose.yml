@@ -1,0 +1,43 @@
+# Production deployment for beetDeck — the single published image
+# (semsemyonoff/beetdeck) that bundles the Flask API and the pre-built SPA.
+#
+# This is the RUNTIME stack operators use to self-host. It pulls a tagged image
+# from the registry; it does NOT build anything (see the Makefile `release`
+# target for building/publishing from the pinned submodules).
+#
+# Quick start:
+#   cp .env.example .env   # then edit paths / port / tag
+#   docker compose up -d
+#   open http://localhost:${BEETDECK_HTTP_PORT}
+
+services:
+  beetdeck:
+    image: "${BEETDECK_IMAGE:-semsemyonoff/beetdeck}:${BEETDECK_TAG:-latest}"
+    container_name: beetdeck
+    restart: unless-stopped
+    ports:
+      - "${BEETDECK_HTTP_PORT:-8080}:5000"
+    environment:
+      # beets config dir read by the `beet` CLI (rescan subprocess). Mounted below.
+      BEETSDIR: /config
+      # SQLite library DB — read by the app and the CLI (see src/__init__.py).
+      BEETS_LIBRARY_DB: /data/beets/library.db
+      # Music / import dir the app scans.
+      BEETS_IMPORT_DIR: /music
+      TZ: "${TZ:-UTC}"
+    volumes:
+      # beets config (config.yaml) — provide your own; see README.
+      - "${BEETDECK_CONFIG_DIR:-./config}:/config"
+      # Music library / import dir (your audio files).
+      - "${BEETDECK_MUSIC_DIR:-./music}:/music"
+      # Persistent app state — the beets SQLite DB lives here.
+      - beetdeck_data:/data/beets
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5000/').status < 500 else 1)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  beetdeck_data:

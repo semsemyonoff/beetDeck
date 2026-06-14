@@ -1,0 +1,6 @@
+[submodule "backend"]
+	path = backend
+	url = ssh://git@git.horn:2222/beetDeck/backend.git
+[submodule "frontend"]
+	path = frontend
+	url = ssh://git@git.horn:2222/beetDeck/frontend.git

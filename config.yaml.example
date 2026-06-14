@@ -1,0 +1,53 @@
+# Example beets configuration for a beetDeck deployment.
+#
+# Copy this into the config dir mounted at /config (BEETSDIR), e.g.:
+#   mkdir -p config && cp config.yaml.example config/config.yaml
+#
+# The `directory` and `library` paths below are CONTAINER paths and match the
+# mounts in docker-compose.yml — keep them as-is unless you change the mounts.
+# All plugins use `auto: no`: beetDeck triggers them on demand from the UI.
+
+directory: /music
+library: /data/beets/library.db
+
+import:
+  copy: no
+  move: no
+  write: yes
+  incremental: yes
+  duplicate_action: skip
+
+plugins:
+  - musicbrainz
+  - fetchart
+  - embedart
+  - lastgenre
+  - lyrics
+  - info
+
+fetchart:
+  auto: no
+  high_resolution: yes
+  sources:
+    - filesystem
+    - coverart
+    - itunes
+    - amazon
+    - albumart
+  minwidth: 500
+  maxwidth: 1200
+  store_source: yes
+
+embedart:
+  auto: no
+  ifempty: yes
+
+lastgenre:
+  auto: no
+  count: 3
+  source: album
+
+lyrics:
+  auto: no
+  sources: [lrclib]
+  synced: yes

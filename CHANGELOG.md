@@ -10,13 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Umbrella-level notes for the next release go here (CI, compose, docs). The
-"Cut release" workflow appends an auto-generated, submodule-derived draft below
-the marker — rewrite it into human-readable notes before publishing.
-
-<!-- release-cut inserts new versions below this line -->
-
-## [0.1.0] - 2026-06-15
+<!-- Write notes for the next release here. "Cut release" promotes this whole
+     section to ## [X.Y.Z] - <date> and uses it as the GitHub/Forgejo release
+     body, then re-seeds an empty Unreleased. -->
 
 Initial release of **beetDeck** — a web interface for managing a
 [beets](https://beets.io/) music library: identification (MusicBrainz), genres

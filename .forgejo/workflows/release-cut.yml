@@ -2,7 +2,8 @@
 # UI (Actions → Cut release → Run workflow), pick a bump, and it:
 #   1. repins backend/frontend submodules to their latest tag (or the ref you give)
 #   2. bumps VERSION (semver: patch/minor/major)
-#   3. appends an auto-generated CHANGELOG section from each submodule's commit range
+#   3. promotes the CHANGELOG [Unreleased] section to [X.Y.Z] - <date> (write
+#      your release notes there before cutting — that text is the release body)
 #   4. commits "release: X.Y.Z" and tags vX.Y.Z, then pushes
 #
 # The tag fans out to the build pipelines: .forgejo/workflows/release.yml
@@ -63,7 +64,6 @@ jobs:
           git submodule update --init --recursive
 
       - name: Repin submodules to their tags
-        id: pins
         run: |
           set -euo pipefail
           repin() {  # $1=path  $2=requested ref (may be empty)
@@ -75,23 +75,12 @@ jobs:
                      | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)"
             fi
             test -n "$ref" || { echo "ERROR: no semver tag in $path and no ref given" >&2; exit 1; }
-            printf '%s' "$ref"
+            git -C "$path" checkout --detach "$ref"
+            echo "$path -> $ref"
           }
-          back_old="$(git -C backend  rev-parse HEAD)"
-          front_old="$(git -C frontend rev-parse HEAD)"
-          back_ref="$(repin  backend  '${{ inputs.backend_ref }}')"
-          front_ref="$(repin frontend '${{ inputs.frontend_ref }}')"
-          git -C backend  checkout --detach "$back_ref"
-          git -C frontend checkout --detach "$front_ref"
+          repin backend  '${{ inputs.backend_ref }}'
+          repin frontend '${{ inputs.frontend_ref }}'
           git add backend frontend
-          {
-            echo "back_old=$back_old"
-            echo "front_old=$front_old"
-            echo "back_ref=$back_ref"
-            echo "front_ref=$front_ref"
-          } >> "$GITHUB_OUTPUT"
-          echo "backend  -> $back_ref"
-          echo "frontend -> $front_ref"
 
       - name: Bump VERSION
         id: ver
@@ -109,26 +98,50 @@ jobs:
           echo "version=$new" >> "$GITHUB_OUTPUT"
           echo "VERSION: $cur -> $new"
 
-      - name: Generate CHANGELOG section
+      - name: Promote Unreleased to the new version
         run: |
           set -euo pipefail
           new="${{ steps.ver.outputs.version }}"
           today="$(date +%Y-%m-%d)"
+
+          grep -q '^## \[Unreleased\]' CHANGELOG.md \
+            || { echo "ERROR: no '## [Unreleased]' heading in CHANGELOG.md" >&2; exit 1; }
+
+          # Release notes = the [Unreleased] body (everything up to the next
+          # version heading), with HTML-comment guidance and edge blank lines
+          # stripped. This text becomes both the new CHANGELOG section and the
+          # GitHub/Forgejo release body.
+          awk '
+            /^## \[Unreleased\]/ {seen=1; next}
+            seen==0 {next}
+            /^## \[/ {exit}
+            /<!--/ {inc=1}
+            inc==1 { if (/-->/) inc=0; next }
+            {print}
+          ' CHANGELOG.md > /tmp/body.md
+          awk 'NF && !s {s=NR} NF {e=NR} {a[NR]=$0} END {if (s) for (i=s; i<=e; i++) print a[i]}' \
+            /tmp/body.md > /tmp/section.md
+          test -s /tmp/section.md \
+            || { echo "ERROR: [Unreleased] is empty — write release notes there before cutting." >&2; exit 1; }
+
+          # Rebuild CHANGELOG: header through the Unreleased heading, a fresh
+          # empty Unreleased, the promoted version, then any older versions.
+          awk '{print} /^## \[Unreleased\]/{exit}' CHANGELOG.md > /tmp/head.md
+          awk '
+            /^## \[Unreleased\]/ {seen=1; next}
+            seen && /^## \[/ {tail=1}
+            tail {print}
+          ' CHANGELOG.md > /tmp/tail.md
           {
-            printf '\n## [%s] - %s\n\n' "$new" "$today"
-            printf '### backend (%s)\n' "${{ steps.pins.outputs.back_ref }}"
-            git -C backend log --no-merges --pretty='- %s' \
-              "${{ steps.pins.outputs.back_old }}..HEAD" 2>/dev/null | grep . || echo '- (no changes)'
-            printf '\n### frontend (%s)\n' "${{ steps.pins.outputs.front_ref }}"
-            git -C frontend log --no-merges --pretty='- %s' \
-              "${{ steps.pins.outputs.front_old }}..HEAD" 2>/dev/null | grep . || echo '- (no changes)'
-          } > /tmp/section.md
-          marker='<!-- release-cut inserts new versions below this line -->'
-          grep -qF "$marker" CHANGELOG.md || { echo "ERROR: CHANGELOG marker missing" >&2; exit 1; }
-          awk -v f=/tmp/section.md -v m="$marker" '
-            { print }
-            index($0, m) { while ((getline line < f) > 0) print line }
-          ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+            cat /tmp/head.md
+            printf '\n<!-- Write notes for the next release here. "Cut release" promotes this\n'
+            printf '     section to ## [X.Y.Z] - <date> and uses it as the release body. -->\n\n'
+            printf '## [%s] - %s\n\n' "$new" "$today"
+            cat /tmp/section.md
+            printf '\n'
+            if [ -s /tmp/tail.md ]; then printf '\n'; cat /tmp/tail.md; fi
+          } > CHANGELOG.md
+          echo "Promoted [Unreleased] -> [$new] - $today"
 
       - name: Commit, tag, push
         run: |
@@ -147,7 +160,7 @@ jobs:
         run: |
           set -euo pipefail
           new="${{ steps.ver.outputs.version }}"
-          # Body = the CHANGELOG section generated earlier (/tmp/section.md).
+          # Body = the promoted [Unreleased] notes (/tmp/section.md).
           payload="$(jq -n --arg tag "v${new}" --arg name "beetDeck ${new}" \
             --rawfile body /tmp/section.md '{tag_name:$tag, name:$name, body:$body}')"
           code="$(curl -sS -o /tmp/release.json -w '%{http_code}' \

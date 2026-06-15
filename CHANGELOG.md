@@ -24,7 +24,7 @@ Initial release of **beetDeck** — a web interface for managing a
 
 Ships as a single multi-arch image (linux/amd64 + linux/arm64) built from
 `backend` v0.1.0 and `frontend` v0.1.0 on **beets 2.11.0**, published to Docker
-Hub, GHCR, and `git.horn/beetdeck/app`.
+Hub and GHCR.
 
 ### Added
 - Full feature set: library browser, per-artist and album pages, MusicBrainz
@@ -43,6 +43,5 @@ Hub, GHCR, and `git.horn/beetdeck/app`.
 - Self-contained multi-stage `Dockerfile` (SPA build + backend runtime) — the
   release image builds entirely from this repo, with no dependency on the dev
   stack.
-- Hybrid release CI: the "Cut release" button builds the multi-arch image and
-  pushes it to Docker Hub + GHCR (GitHub Actions) and `git.horn/beetdeck/app`
-  (Forgejo Actions).
+- Release CI: the "Cut release" button builds the multi-arch image and
+  publishes it to Docker Hub and GHCR.

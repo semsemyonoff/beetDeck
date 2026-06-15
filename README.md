@@ -96,17 +96,15 @@ builds the SPA, stage 2 is the backend runtime).
 
 ### Where the image is published
 
-The same image is pushed to three registries by CI. Operators can pull from
-whichever they like via `BEETDECK_IMAGE` in `.env`:
+The same image is pushed to both public registries by CI. Operators can pull
+from whichever they like via `BEETDECK_IMAGE` in `.env`:
 
 | Registry  | Image ref                        | Built by        | Audience                 |
 |-----------|----------------------------------|-----------------|--------------------------|
 | Docker Hub| `semsemyonoff/beetdeck`          | GitHub Actions  | public (default)         |
 | GHCR      | `ghcr.io/semsemyonoff/beetdeck`  | GitHub Actions  | public                   |
-| git.horn  | `git.horn/beetdeck/app`          | Forgejo Actions | own / internal infra     |
 
-`git.horn` is the source of truth (Forgejo) and push-mirrors to GitHub; the
-third-party mirror registry `registry.horn` (zot) is **not** used for our images.
+The Forgejo repo is the source of truth and push-mirrors to GitHub.
 
 ### Cutting a release (the one button)
 
@@ -120,10 +118,11 @@ Run **Forgejo → Actions → Cut release → Run workflow**, pick a bump
    the `Unreleased` section);
 4. commits `release: X.Y.Z`, tags `vX.Y.Z`, and pushes.
 
-The tag fans out to the build pipelines: `.forgejo/workflows/release.yml` pushes
-`git.horn/beetdeck/app`, and — via the mirror — `.github/workflows/release.yml`
-pushes Docker Hub + GHCR. It must be triggered on Forgejo because the mirror is
-one-way (Forgejo → GitHub), so the tag has to originate there.
+The tag fans out to the build pipelines: `.forgejo/workflows/release.yml` builds
+and pushes the image on internal infra, and — via the mirror —
+`.github/workflows/release.yml` pushes Docker Hub + GHCR. It must be triggered on
+Forgejo because the mirror is one-way (Forgejo → GitHub), so the tag has to
+originate there.
 
 A **Release** page is created on each platform from the same CHANGELOG section
 (notes only, no attached assets): Forgejo via its API in `release-cut`, GitHub
@@ -142,9 +141,9 @@ each side publishes its own — that's expected.
   the registry push, and `RELEASE_TOKEN` (a PAT with repo write) used by
   `release-cut` to push the tag. It must be a PAT — a tag pushed by the automatic
   Actions token would not trigger the build jobs.
-- **Runner CA:** add `git.horn` to `FORGEJO_RUNNER_DOCKER_CA_HOSTS` in the git
-  stack's `.env` and redeploy the runner, so its Docker daemon trusts the
-  `*.horn` cert when pushing to `git.horn` (otherwise the push fails with x509).
+- **Runner CA:** add the internal registry host to `FORGEJO_RUNNER_DOCKER_CA_HOSTS`
+  in the git stack's `.env` and redeploy the runner, so its Docker daemon trusts
+  the registry's CA when pushing (otherwise the push fails with x509).
 
 ### Local fallback
 

@@ -16,6 +16,53 @@ the marker — rewrite it into human-readable notes before publishing.
 
 <!-- release-cut inserts new versions below this line -->
 
+## [0.1.0] - 2026-06-15
+
+### backend (v0.1.0)
+- style: apply ruff format to library.py after merge
+- feat(backend): add GET /api/version endpoint
+- chore(backend): upgrade beets 2.10.0 → 2.11.0, migrate off deprecated beets.art
+- feat: downscaled WebP cover thumbnails + track has_cover
+- docs: remove DWE-environment references from the repo
+- refactor: rename src package to beetdeck (flat layout)
+- style: apply ruff format to schemas and tests
+- feat: report product release version as OpenAPI info.version
+- fix: address code review findings
+- fix: address code review findings
+- docs: retire manual API table, document OpenAPI/Scalar + schemas
+- feat: Task 11 — standardize 422 validation-error contract
+- feat: Task 10 — annotate scan blueprint (spectree validation)
+- feat: Task 9 — annotate items blueprint (spectree validation)
+- feat: Task 8 — annotate identify blueprint (spectree validation)
+- feat: Task 7 — annotate lyrics blueprint (spectree validation)
+- feat: Task 6 — annotate genres blueprint (spectree validation)
+- feat: Task 5 — annotate cover blueprint (spectree validation)
+- feat: Task 4 — annotate albums blueprint (spectree validation)
+- feat: Task 3 — annotate library blueprint (spectree validation)
+- feat: Task 2 — shared schemas (error model + common types)
+- feat: Task 1 — bootstrap SpecTree singleton + Scalar viewer
+- docs: scope README to the backend part, point to deploy entry point
+- chore: extract release tooling to the deploy repo
+- style: apply ruff format to tag-editor sources
+- ci: drop ffmpeg system-deps step from the test job
+- ci: add Forgejo Actions workflow (ruff lint/format + pytest)
+- style: apply ruff format to src/routes/genres.py
+- fix: address code review findings
+- fix: address code review findings
+- docs: document metadata-batch endpoint and metadata_write_lock
+- feat: add POST /api/items/metadata-batch endpoint
+- fix: skip path-normalization preflight on a fresh/empty beets DB
+- fix: address code review findings
+- fix: make sync-frontend-dist directory-safe
+- feat: add sync-frontend-dist target and build guard for SPA hand-off
+- Move deps into pyproject.toml, add ruff, decouple prod image
+- Extract frontend into its own repo (beetDeck/frontend.git)
+
+### frontend (v0.1.0)
+- Fix fmt
+- feat: display version info from GET /api/version in topbar
+- feat: search dropdown polish + downscaled cover thumbnails
+
 ## [0.1.0] - 2026-06-14
 
 Initial release of **beetDeck** — a web interface for managing a

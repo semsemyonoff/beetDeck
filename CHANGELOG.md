@@ -10,9 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-<!-- Write notes for the next release here. "Cut release" promotes this whole
-     section to ## [X.Y.Z] - <date> and uses it as the GitHub/Forgejo release
-     body, then re-seeds an empty Unreleased. -->
+<!-- Write notes for the next release here. "Cut release" promotes this
+     section to ## [X.Y.Z] - <date> and uses it as the release body. -->
+
+## [0.1.0] - 2026-06-15
 
 Initial release of **beetDeck** — a web interface for managing a
 [beets](https://beets.io/) music library: identification (MusicBrainz), genres
@@ -41,3 +42,4 @@ Hub and GHCR.
   stack.
 - Release CI: the "Cut release" button builds the multi-arch image and
   publishes it to Docker Hub and GHCR.
+

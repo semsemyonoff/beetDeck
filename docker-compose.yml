@@ -20,7 +20,7 @@ services:
     environment:
       # beets config dir read by the `beet` CLI (rescan subprocess). Mounted below.
       BEETSDIR: /config
-      # SQLite library DB — read by the app and the CLI (see src/__init__.py).
+      # SQLite library DB — read by the app and the CLI (see beetdeck/__init__.py).
       BEETS_LIBRARY_DB: /data/beets/library.db
       # Music / import dir the app scans.
       BEETS_IMPORT_DIR: /music

@@ -31,12 +31,12 @@ WORKDIR /app
 # Dependencies are declared in pyproject.toml (single source of truth; pulls the
 # pinned beets release tarball).
 COPY backend/pyproject.toml backend/README.md backend/app.py ./
-COPY backend/src ./src
+COPY backend/beetdeck ./beetdeck
 RUN pip install --no-cache-dir .
 
 # Bake the built SPA where Flask serves it: /static/dist/ (resolved via the Vite
-# manifest at request time — see backend src/__init__.py + src/templates/index.html).
-COPY --from=spa /app/dist ./src/static/dist
+# manifest at request time — see backend beetdeck/__init__.py + beetdeck/templates/index.html).
+COPY --from=spa /app/dist ./beetdeck/static/dist
 
 RUN mkdir -p /tmp/beetdeck && chmod 1777 /tmp/beetdeck
 

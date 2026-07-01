@@ -10,8 +10,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-<!-- Write notes for the next release here. "Cut release" promotes this
-     section to ## [X.Y.Z] - <date> and uses it as the release body. -->
+Second release of **beetDeck**, on
+[beets 2.12.0](https://github.com/beetbox/beets/releases/tag/v2.12.0). Focuses on
+richer tag editing, tempo tagging, and a much better feel for scans and bulk
+lyrics.
+
+### Added
+- **Full tag editing** — a per-track editor for *any* beets field, not just the
+  fixed batch set: edit flexible attributes, add known fields, with read-only and
+  album-level fields clearly marked. Opens from the album tags view and the
+  untagged-folder editor.
+- **BPM tagging** — compute tempo for a single track or a whole album via beets'
+  `autobpm`, written straight into the files, with a green indicator on tracks and
+  albums that already have it.
+- **Album lyrics preview** — fetching lyrics for a whole album now opens a modal
+  with a per-track before/after diff, parallel downloads with a progress bar, and
+  per-track or apply-all confirmation (previously it wrote everything blindly).
+- **Open in new tab** — albums, artists, untagged folders, search results, and
+  breadcrumbs are now real links, so middle-click, Ctrl/Cmd-click, and "Open in
+  new tab" all work.
+
+### Changed
+- **Scan progress** — the scan banner now shows a real progress bar with the
+  current item and phase, backed by a live scan-log screen; the completion result
+  persists until you dismiss it instead of vanishing after a few seconds.
+- Upgraded to [beets 2.12.0](https://github.com/beetbox/beets/releases/tag/v2.12.0)
+  (from 2.11.0), plus refreshed application dependencies.
+
+### Fixed
+- Rescan now correctly *replaces* an existing track when a different-format copy is
+  imported, instead of leaving a stale duplicate behind.
 
 ## [0.1.0] - 2026-06-15
 

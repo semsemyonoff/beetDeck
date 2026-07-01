@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+<!-- Write notes for the next release here. "Cut release" promotes this
+     section to ## [X.Y.Z] - <date> and uses it as the release body. -->
+
+## [0.2.0] - 2026-07-01
+
 Second release of **beetDeck**, on
 [beets 2.12.0](https://github.com/beetbox/beets/releases/tag/v2.12.0). Focuses on
 richer tag editing, tempo tagging, and a much better feel for scans and bulk
@@ -40,6 +45,7 @@ lyrics.
 ### Fixed
 - Rescan now correctly *replaces* an existing track when a different-format copy is
   imported, instead of leaving a stale duplicate behind.
+
 
 ## [0.1.0] - 2026-06-15
 

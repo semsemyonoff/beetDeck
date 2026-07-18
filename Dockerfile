@@ -38,10 +38,19 @@ RUN pip install --no-cache-dir .
 # manifest at request time — see backend beetdeck/__init__.py + beetdeck/templates/index.html).
 COPY --from=spa /app/dist ./beetdeck/static/dist
 
-RUN mkdir -p /tmp/beetdeck && chmod 1777 /tmp/beetdeck
+RUN mkdir -p /tmp/beetdeck/numba && chmod 1777 /tmp/beetdeck /tmp/beetdeck/numba
 
 EXPOSE 5000
 ENV TMPDIR=/tmp/beetdeck
+
+# librosa (autobpm) JIT-compiles via numba with cache=True. Numba picks a cache
+# location by trying, in order: NUMBA_CACHE_DIR, the source tree (site-packages),
+# then $HOME. Running as a non-root user makes site-packages read-only and $HOME
+# unwritable, so every locator fails and the compile dies with
+#   "cannot cache function '__o_fold': no locator available"
+# — surfacing as "BPM computation failed (no value)". Pinning the cache to a
+# world-writable dir makes BPM work under any UID.
+ENV NUMBA_CACHE_DIR=/tmp/beetdeck/numba
 
 # Product release version, baked at build time (build.sh passes the release tag,
 # e.g. 1.2.3). The backend reads APP_VERSION at startup and reports it as the

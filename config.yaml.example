@@ -23,6 +23,7 @@ plugins:
   - embedart
   - lastgenre
   - lyrics
+  - autobpm
   - info
 
 fetchart:
@@ -51,3 +52,6 @@ lyrics:
   auto: no
   sources: [lrclib]
   synced: yes
+
+autobpm:
+  auto: no

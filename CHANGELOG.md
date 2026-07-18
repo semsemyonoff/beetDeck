@@ -13,6 +13,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- Write notes for the next release here. "Cut release" promotes this
      section to ## [X.Y.Z] - <date> and uses it as the release body. -->
 
+Patch release that makes **BPM tagging** actually work in a self-hosted
+deployment. The feature shipped in 0.2.0 but was unusable in two independent
+ways, both fixed here.
+
+### Fixed
+- **BPM computation under a non-root container** — computing BPM failed with
+  `BPM computation failed` whenever the container ran as a non-root user
+  (`user: "1000:1000"`, PUID/PGID — the usual self-hosting setup). The audio
+  analysis library compiles code on first use and had nowhere to write its
+  cache, because neither the install directory nor the home directory is
+  writable for that user. The image now ships a dedicated writable cache
+  location, so BPM works under any UID.
+- **`autobpm` missing from the example config** — the shipped
+  `config.yaml.example` never enabled the plugin, so a deployment set up from it
+  answered `autobpm plugin not loaded`. The example now lists `autobpm` and its
+  `auto: no` block, matching the other on-demand plugins.
+
+### Upgrading
+Your `config.yaml` is operator-owned and is *not* updated by the image. If BPM
+reports `autobpm plugin not loaded`, add `autobpm` to the `plugins:` list and an
+`autobpm:` / `auto: no` block to your own config (see `config.yaml.example`),
+then restart the container — beets reads its config at startup.
+
 ## [0.2.0] - 2026-07-01
 
 Second release of **beetDeck**, on

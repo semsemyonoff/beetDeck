@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- Write notes for the next release here. "Cut release" promotes this
      section to ## [X.Y.Z] - <date> and uses it as the release body. -->
 
+## [0.2.1] - 2026-07-18
+
 Patch release that makes **BPM tagging** actually work in a self-hosted
 deployment. The feature shipped in 0.2.0 but could not run whenever the
 container runs under a non-root user.
@@ -31,6 +33,7 @@ Your `config.yaml` is operator-owned and is *not* updated by the image. If BPM
 reports `autobpm plugin not loaded`, add `autobpm` to the `plugins:` list and an
 `autobpm:` / `auto: no` block to your own config (see `config.yaml.example`),
 then restart the container — beets reads its config at startup.
+
 
 ## [0.2.0] - 2026-07-01
 

@@ -14,8 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
      section to ## [X.Y.Z] - <date> and uses it as the release body. -->
 
 Patch release that makes **BPM tagging** actually work in a self-hosted
-deployment. The feature shipped in 0.2.0 but was unusable in two independent
-ways, both fixed here.
+deployment. The feature shipped in 0.2.0 but could not run whenever the
+container runs under a non-root user.
 
 ### Fixed
 - **BPM computation under a non-root container** — computing BPM failed with
@@ -25,10 +25,6 @@ ways, both fixed here.
   cache, because neither the install directory nor the home directory is
   writable for that user. The image now ships a dedicated writable cache
   location, so BPM works under any UID.
-- **`autobpm` missing from the example config** — the shipped
-  `config.yaml.example` never enabled the plugin, so a deployment set up from it
-  answered `autobpm plugin not loaded`. The example now lists `autobpm` and its
-  `auto: no` block, matching the other on-demand plugins.
 
 ### Upgrading
 Your `config.yaml` is operator-owned and is *not* updated by the image. If BPM

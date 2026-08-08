@@ -32,6 +32,12 @@ WORKDIR /app
 # pinned beets release tarball).
 COPY backend/pyproject.toml backend/README.md backend/app.py ./
 COPY backend/beetdeck ./beetdeck
+# The MCP server is a second top-level package in the backend repo, shipped in
+# this same image but run as a SEPARATE process (`python -m beetdeck_mcp`) that
+# reaches the Flask API over HTTP — see the profile-gated `beetdeck-mcp` service
+# in docker-compose.yml. Its deps (mcp, httpx) are already in pyproject's
+# [project] dependencies, so `pip install .` below covers both packages.
+COPY backend/beetdeck_mcp ./beetdeck_mcp
 RUN pip install --no-cache-dir .
 
 # Bake the built SPA where Flask serves it: /static/dist/ (resolved via the Vite
@@ -60,6 +66,14 @@ ENV NUMBA_CACHE_DIR=/tmp/beetdeck/numba
 # `docker build` without --build-arg.
 ARG APP_VERSION=0.0.0
 ENV APP_VERSION=$APP_VERSION
+
+# Runs the beets DB migrations single-process before handing off, then execs the
+# CMD. It keys off the CMD's first word being `gunicorn`, so an overridden
+# command (the MCP sidecar, `beet …`, a shell) skips straight to exec — see the
+# script's header.
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 # Single worker is mandatory: the app shares in-memory state across request
 # threads (scan/identify tasks). Scale with threads, never workers.

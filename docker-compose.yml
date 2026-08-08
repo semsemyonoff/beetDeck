@@ -39,5 +39,55 @@ services:
       retries: 5
       start_period: 20s
 
+  # ---- MCP server (optional) ----
+  # Exposes the library to an AI agent over MCP (streamable-http). Same image,
+  # different command: a SEPARATE process that reaches the API above over HTTP.
+  # It shares no memory, no config dir and no library mount with it — the REST
+  # API is the only coupling.
+  #
+  # Opt-in via a compose profile, so a plain `docker compose up -d` is unchanged:
+  #   docker compose --profile mcp up -d
+  # See README → MCP server for the required .env values.
+  beetdeck-mcp:
+    image: "${BEETDECK_IMAGE:-semsemyonoff/beetdeck}:${BEETDECK_TAG:-latest}"
+    container_name: beetdeck-mcp
+    profiles: [mcp]
+    restart: unless-stopped
+    command: ["python", "-m", "beetdeck_mcp"]
+    ports:
+      - "${BEETDECK_MCP_PORT:-5100}:5100"
+    environment:
+      # The API service above, over the compose network (container port).
+      BEETDECK_API_URL: "http://beetdeck:5000"
+      # In-container bind only; the published port is the mapping above.
+      BEETDECK_MCP_HOST: "0.0.0.0"
+      BEETDECK_MCP_PORT: "5100"
+      # Both are startup-fatal when empty, and neither degrades to a default: an
+      # empty token table would publish an unauthenticated write surface, and
+      # MusicBrainz rejects anonymous clients. The server itself refuses to boot
+      # (exit 2, naming the variable) — deliberately NOT compose's `${VAR:?}`,
+      # which is interpolated even when this profile is inactive and would break
+      # a plain `docker compose up -d` for everyone not using MCP.
+      BEETDECK_MCP_TOKEN: "${BEETDECK_MCP_TOKEN:-}"
+      MUSICBRAINZ_USER_AGENT: "${MUSICBRAINZ_USER_AGENT:-}"
+      # DNS-rebinding protection. An EMPTY value disables the Host/Origin check
+      # entirely — it does NOT narrow to localhost. Set it to the hostname(s) you
+      # publish this on; the bearer token is otherwise the only gate.
+      BEETDECK_MCP_ALLOWED_HOSTS: "${BEETDECK_MCP_ALLOWED_HOSTS:-}"
+      # Disables the apply step only. Previews still run — and they do fetch
+      # remote data and can start background jobs on the API.
+      BEETDECK_MCP_READONLY: "${BEETDECK_MCP_READONLY:-false}"
+      TZ: "${TZ:-UTC}"
+    depends_on:
+      beetdeck:
+        condition: service_healthy
+    healthcheck:
+      # /health is the one route left outside the bearer-token middleware.
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5100/health').status < 500 else 1)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
 volumes:
   beetdeck_data:

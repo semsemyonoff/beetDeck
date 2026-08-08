@@ -13,6 +13,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- Write notes for the next release here. "Cut release" promotes this
      section to ## [X.Y.Z] - <date> and uses it as the release body. -->
 
+Third feature release of **beetDeck**, on
+[beets 2.13.1](https://github.com/beetbox/beets/releases/tag/v2.13.1). The
+headline is an optional **MCP server** — your library, worked on by an AI agent,
+with a preview-then-apply step in front of every change.
+
+### Added
+- **MCP server (optional, off by default)** — a second container that exposes
+  the library to Claude or any other [MCP](https://modelcontextprotocol.io/)
+  client: browse and search, identify against MusicBrainz, fetch cover art,
+  genres and lyrics, edit tags — in conversation instead of by clicking. Every
+  write is two-phase: the agent asks for a preview, you get a diff, and a
+  separate apply step is the only thing that touches your files. Bearer-token
+  authenticated, with a read-only mode that withholds the apply step entirely.
+  Start it with `docker compose --profile mcp up -d`; see README → *MCP server*
+  for the two required settings and the exposure caveats.
+- **Album and artist names in the browser tab title** — so a row of open album
+  tabs is tellable apart, and history and bookmarks read sensibly.
+
+### Changed
+- Upgraded to [beets 2.13.1](https://github.com/beetbox/beets/releases/tag/v2.13.1)
+  (from 2.12.0).
+- **Instrumental tracks are now their own lyrics state.** beets recognises an
+  instrumental match instead of storing the literal `[Instrumental]` as the
+  lyrics text. beetDeck reports those tracks as instrumental rather than as a
+  failed lookup, and they keep counting as "has lyrics" — previously they would
+  have quietly flipped to "nothing found" after the upgrade.
+- **Genre spellings are normalised** before filtering, by an alias table new in
+  beets 2.13. `Shoegazer` now comes back as `Shoegaze`, `Synthpop` as
+  `Synth-Pop`, and a handful of previously-valid tags (`dance`, `rhythm and
+  blues`, `industrial music`, `psychedelic trance`, `2-step garage`, `noise
+  music`) no longer match and are dropped. Genres already in your library are
+  left alone, so expect a mix of old and new spellings.
+
+### Fixed
+- **A failed identification could permanently lose arranger, composer, lyricist
+  and remixer tags.** When identifying an album went wrong part-way through, the
+  automatic undo restored everything *except* those four fields — and on a full
+  re-tag, where every tag is cleared first, that meant they were gone for good.
+  The undo also left an empty stray attribute behind on each track.
+- **`config.yaml.example` shipped `duplicate_action: skip`**, which defeated the
+  0.2.0 fix for replacing a track with a different-format copy: the old track
+  disappeared on one rescan and only came back on the next. The example now says
+  `remove`. Existing configs are not touched — see *Upgrading*.
+
+### Upgrading
+- **The library database is migrated for you.** beets 2.13 changes the schema,
+  and the new image completes that migration in one pass at startup, before it
+  accepts any requests. Nothing to run by hand.
+- **Delete the backup copies afterwards.** beets copies the whole database
+  before each migration it applies, as `library.db-before-*.bak` inside the
+  `beetdeck_data` volume. Nothing prunes them. Remove them once you have
+  confirmed the upgrade is healthy.
+- **Check `duplicate_action` in your own `config.yaml`.** It is operator-owned
+  and is *not* updated by the image. If it still reads `skip`, change it to
+  `remove` under `import:` and restart, or a rescan that picks up a re-encoded
+  track will drop it for one pass.
+
 ## [0.2.1] - 2026-07-18
 
 Patch release that makes **BPM tagging** actually work in a self-hosted

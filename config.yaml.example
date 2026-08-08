@@ -15,7 +15,10 @@ import:
   move: no
   write: yes
   incremental: yes
-  duplicate_action: skip
+  # `remove`, not `skip`: re-importing a track you replaced with another format
+  # (mp3 -> flac) must swap the old item out in one pass. With `skip` the track
+  # vanishes on the first rescan and only comes back on the second.
+  duplicate_action: remove
 
 plugins:
   - musicbrainz

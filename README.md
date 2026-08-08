@@ -42,6 +42,9 @@ by something like Lidarr) and it becomes the tagging and browsing layer on top.
 - **Rescan** — a quick incremental scan or a full rescan to pick up new files and
   drop stale entries.
 - **Light or dark theme** — follows your system preference, with a manual toggle.
+- **Hand it to an AI agent** — an optional [MCP](https://modelcontextprotocol.io/)
+  server lets Claude (or any MCP client) do the same work in conversation, with a
+  preview-then-apply step on every change. Off by default; see below.
 
 ### Identify against MusicBrainz
 
@@ -97,6 +100,43 @@ run **Full Scan** in the top bar to load your library into beetDeck.
 Your beets database and app state persist in a Docker volume, so your work
 survives restarts and upgrades.
 
+### MCP server (optional)
+
+beetDeck can also expose your library to an AI agent (Claude, or anything else
+that speaks [MCP](https://modelcontextprotocol.io/)) — browsing, identification,
+cover art, lyrics and tag edits, driven in conversation instead of by clicking.
+
+Every change an agent can make is **two-phase**: it asks for a preview, you see
+the diff, and only an explicit apply step writes anything. It runs as a second
+container from the same image, off by default:
+
+```bash
+# in .env — both are required, the server refuses to start without them
+BEETDECK_MCP_TOKEN=$(openssl rand -hex 24)
+MUSICBRAINZ_USER_AGENT='beetDeck/0.3.0 ( you@example.com )'
+
+docker compose --profile mcp up -d
+```
+
+The endpoint is then at `http://localhost:5100/mcp`, authenticated with
+`Authorization: Bearer <BEETDECK_MCP_TOKEN>`.
+
+| Variable                     | Default | What it does                                          |
+|------------------------------|---------|-------------------------------------------------------|
+| `BEETDECK_MCP_TOKEN`         | —       | **Required.** Bearer token(s), comma-separated         |
+| `MUSICBRAINZ_USER_AGENT`     | —       | **Required.** MusicBrainz rejects anonymous clients    |
+| `BEETDECK_MCP_PORT`          | `5100`  | Host port for the MCP endpoint                         |
+| `BEETDECK_MCP_ALLOWED_HOSTS` | *(empty)* | Allowed `Host`/`Origin` values — see the warning below |
+| `BEETDECK_MCP_READONLY`      | `false` | `true` lets the agent preview but never apply          |
+
+> **Two things worth knowing before you expose this.** An empty
+> `BEETDECK_MCP_ALLOWED_HOSTS` turns the `Host`/`Origin` check off entirely — it
+> does *not* quietly fall back to localhost — so on anything but a private
+> network, set it. And `BEETDECK_MCP_READONLY` gates the apply step only:
+> previews still reach out to MusicBrainz/Last.fm/lrclib, and rescan, BPM
+> computation and the ignore toggle sit outside the preview contract and keep
+> working.
+
 ### Handy commands
 
 A `Makefile` wraps the common operations:
@@ -116,6 +156,12 @@ Bump `BEETDECK_TAG` in `.env`, then:
 ```bash
 make pull && make up
 ```
+
+Your library database is migrated automatically on the first start of the new
+image, before it accepts any requests. Some beets upgrades take a backup copy of
+the database first, as `library.db-before-*.bak` inside the `beetdeck_data`
+volume — nothing prunes those, so delete them once you're happy the upgrade
+went through.
 
 ## About this repository
 

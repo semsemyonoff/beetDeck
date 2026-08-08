@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- Write notes for the next release here. "Cut release" promotes this
      section to ## [X.Y.Z] - <date> and uses it as the release body. -->
 
+## [0.3.0] - 2026-08-08
+
 Third feature release of **beetDeck**, on
 [beets 2.13.1](https://github.com/beetbox/beets/releases/tag/v2.13.1). The
 headline is an optional **MCP server** — your library, worked on by an AI agent,
@@ -69,6 +71,7 @@ with a preview-then-apply step in front of every change.
   and is *not* updated by the image. If it still reads `skip`, change it to
   `remove` under `import:` and restart, or a rescan that picks up a re-encoded
   track will drop it for one pass.
+
 
 ## [0.2.1] - 2026-07-18
 

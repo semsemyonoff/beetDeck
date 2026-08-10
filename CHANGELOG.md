@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- Write notes for the next release here. "Cut release" promotes this
      section to ## [X.Y.Z] - <date> and uses it as the release body. -->
 
+## [0.3.1] - 2026-08-10
+
 Patch release: cover art beetDeck saved was unreadable to other programs, quick
 rescans were silently doing full ones, and a competing fetch could be committed
 in place of the one you previewed.

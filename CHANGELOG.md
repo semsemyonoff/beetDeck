@@ -13,6 +13,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- Write notes for the next release here. "Cut release" promotes this
      section to ## [X.Y.Z] - <date> and uses it as the release body. -->
 
+Patch release: cover art beetDeck saved was unreadable to other programs, quick
+rescans were silently doing full ones, and a competing fetch could be committed
+in place of the one you previewed.
+
+### Fixed
+- **Saved cover art was readable only by beetDeck.** Every `cover.jpg` from a
+  fetch or upload landed owner-only, so media servers and other containers
+  sharing the music folder saw an album with no artwork. New covers get normal
+  permissions; for existing ones,
+  `find /path/to/music -name 'cover.jpg' -perm 600 -exec chmod 644 {} +`.
+- **`config.yaml.example` set no `statefile`, so quick rescans were never
+  incremental.** beets could not write its import history into a read-only
+  config dir and said so only in the log, so every quick scan re-read the tags
+  of the whole library. The example now keeps the state file beside
+  `library.db`. Existing configs are not touched — see *Upgrading*.
+- **A cover or lyrics fetch could be committed on top of a newer one.** A second
+  fetch — another browser tab, or an AI agent on the same album — silently
+  replaced the result you were shown, and confirming saved that one instead.
+  Stale confirms are now refused, and concurrent writes to the same album are
+  serialized.
+- **Cover-art plugins never saw the artwork beetDeck saved** — the beets event
+  they hook was not emitted.
+- **A corrupt cover file could make its album page fail to load** with a server
+  error instead of the album.
+
+### Added
+- **Cover art dimensions**, on the album and on a fetched candidate — so you can
+  tell whether a new cover is an upgrade before saving it.
+- **Instrumental tracks are marked as such** on the album page, instead of being
+  indistinguishable from tracks nobody ever looked up.
+
+### Changed
+- **MCP: cover and lyrics previews are enforced by the backend**, like
+  identification already was — an apply is refused if the fetched result was
+  replaced. Their tokens now last the same 15 minutes as every other kind.
+- **MCP: `list_albums` takes an `artist` filter**, so answering "what do we have
+  by this band" no longer means pulling the whole library.
+
+### Upgrading
+- **Add `statefile: /data/beets/state.pickle` to your own `config.yaml`** — it is
+  operator-owned and not updated by the image. `state file could not be written`
+  in a rescan log (`/data/beets/scan-logs/<run_id>.log`) means you are affected.
+  The first scan after the change is still a full one; the ones after it take
+  seconds.
+- **Existing cover files keep their old permissions** — only newly saved artwork
+  gets the fix; see the `find` command above.
+
+
 ## [0.3.0] - 2026-08-08
 
 Third feature release of **beetDeck**, on

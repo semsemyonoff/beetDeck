@@ -9,11 +9,21 @@
 
 directory: /music
 library: /data/beets/library.db
+# beets' incremental-import history. It defaults to `state.pickle` *relative to
+# BEETSDIR*, which is wrong for this layout twice over: the config dir is a
+# committed artifact that has no business holding mutable binary state, and a
+# deployment that mounts it read-only (a reasonable thing to do) leaves beets
+# unable to write the history at all. It fails silently — one
+# "state file could not be written" line per album in the rescan log — and
+# `incremental: yes` below then skips nothing, so every quick scan re-reads the
+# tags of the entire library. Keep it in the data volume, next to library.db.
+statefile: /data/beets/state.pickle
 
 import:
   copy: no
   move: no
   write: yes
+  # Only effective together with a writable `statefile` above.
   incremental: yes
   # `remove`, not `skip`: re-importing a track you replaced with another format
   # (mp3 -> flac) must swap the old item out in one pass. With `skip` the track

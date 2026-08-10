@@ -98,7 +98,12 @@ run **Full Scan** in the top bar to load your library into beetDeck.
 | `TZ`                  | `UTC`                   | Timezone for logs and timestamps      |
 
 Your beets database and app state persist in a Docker volume, so your work
-survives restarts and upgrades.
+survives restarts and upgrades. Nothing writes into the config dir — it holds
+`config.yaml` and nothing else — so you can mount it read-only if you keep it
+under version control. That only holds while `statefile` points into
+`/data/beets`, as the example config does; drop that line and beets puts its
+import history in the config dir instead, and silently stops doing incremental
+rescans wherever it cannot write there.
 
 ### MCP server (optional)
 

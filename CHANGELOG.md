@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- Write notes for the next release here. "Cut release" promotes this
      section to ## [X.Y.Z] - <date> and uses it as the release body. -->
 
+## [0.3.2] - 2026-08-12
+
 Patch release: beetDeck no longer reports what it failed to check as a fact
 about your library.
 
@@ -51,6 +53,7 @@ about your library.
 - Nothing to change. Frequent "below the configured minimum width" warnings mean
   `fetchart.minwidth` in your `config.yaml` is stricter than the artwork the
   sources actually have.
+
 
 ## [0.3.1] - 2026-08-10
 

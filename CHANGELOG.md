@@ -13,6 +13,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- Write notes for the next release here. "Cut release" promotes this
      section to ## [X.Y.Z] - <date> and uses it as the release body. -->
 
+Patch release: beetDeck no longer reports what it failed to check as a fact
+about your library.
+
+### Fixed
+- **A search during a rescan looked like an empty library.** Album lists and
+  searches now say a scan is in flight and name the run.
+- **"Last.fm has no genre for this album" was said when Last.fm could not be
+  reached.** A failed lookup is reported as one, with the reason the service
+  gave.
+- **"No cover art found online" was said for art that was found and then
+  refused** by the configured minimum width. Such a cover is now offered with a
+  warning; when nothing is usable, the art sources' own reasons are reported.
+- **A blocked lyrics source looked like a track with no lyrics.** A run in which
+  a source failed says so.
+- **Saving a genre could write something other than the preview showed** —
+  confirming ran a second Last.fm lookup. The previewed value is what gets
+  saved.
+
+### Added
+- **Genre Replace or Merge** — merge keeps the genres the album already has and
+  adds the fetched ones it lacks. The preview shows current, fetched and
+  proposed.
+- **Cover preview compares sizes** with the current cover, so an upgrade is
+  visible before saving.
+
+### Changed
+- **MCP:** `preview_genres` takes `mode`; `preview_cover` carries both sizes and
+  flags a candidate the size filter rejects; `list_albums` / `search_library` /
+  `list_untagged_items` note an in-flight rescan; `preview_lyrics` separates a
+  failed source from an absent lyric.
+- **API:** `POST /api/album/<id>/genre` takes `?mode=replace|merge` and answers
+  `502` when the lookup itself failed; cover- and lyrics-fetch responses carry
+  sizes, warnings and reasons.
+
+### Upgrading
+- Nothing to change. Frequent "below the configured minimum width" warnings mean
+  `fetchart.minwidth` in your `config.yaml` is stricter than the artwork the
+  sources actually have.
+
 ## [0.3.1] - 2026-08-10
 
 Patch release: cover art beetDeck saved was unreadable to other programs, quick

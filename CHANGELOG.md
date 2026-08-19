@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- Write notes for the next release here. "Cut release" promotes this
      section to ## [X.Y.Z] - <date> and uses it as the release body. -->
 
+## [0.4.0] - 2026-08-19
+
 Fourth feature release, and it is about the artwork gallery: everything the
 Cover Art Archive holds for an album, browsable inside beetDeck, any of it one
 click from being the cover. Plus a metadata sync with MusicBrainz.
@@ -35,6 +37,7 @@ click from being the cover. Plus a metadata sync with MusicBrainz.
 - `config.yaml.example` now spells out `musicbrainz.genres: no`. It is already
   beets' default and beetDeck never raises it, so your own config only needs the
   line if you want the guarantee written down.
+
 
 ## [0.3.2] - 2026-08-12
 

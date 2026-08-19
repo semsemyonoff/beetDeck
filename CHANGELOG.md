@@ -13,6 +13,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- Write notes for the next release here. "Cut release" promotes this
      section to ## [X.Y.Z] - <date> and uses it as the release body. -->
 
+Fourth feature release, and it is about the artwork gallery: everything the
+Cover Art Archive holds for an album, browsable inside beetDeck, any of it one
+click from being the cover. Plus a metadata sync with MusicBrainz.
+
+### Added
+- **Cover Art Archive gallery** — every scan of a release the Archive has (front,
+  back, booklet, the disc itself) in a grid with a fullscreen viewer, and any of
+  them can become the album's cover. What it downloads is optionally mirrored to a
+  volume, so a second visit never goes back to the Archive.
+- **Sync from MusicBrainz** — re-read an identified album's release and apply what
+  changed there since, field by field, from a preview you approve.
+- **MusicBrainz as a genre source**, next to Last.fm.
+
+### Changed
+- **MCP:** `preview_mbsync` is new; `preview_genres` takes a `source`.
+
+### Upgrading
+- Nothing to change. The artwork mirror is off by default — turn it on with
+  `BEETDECK_ARTWORK_DIR=/data/artwork` in `.env`; see README.
+- `config.yaml.example` now spells out `musicbrainz.genres: no`. It is already
+  beets' default and beetDeck never raises it, so your own config only needs the
+  line if you want the guarantee written down.
+
 ## [0.3.2] - 2026-08-12
 
 Patch release: beetDeck no longer reports what it failed to check as a fact

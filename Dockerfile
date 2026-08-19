@@ -46,6 +46,14 @@ COPY --from=spa /app/dist ./beetdeck/static/dist
 
 RUN mkdir -p /tmp/beetdeck/numba && chmod 1777 /tmp/beetdeck /tmp/beetdeck/numba
 
+# Mount point for the optional artwork mirror (BEETS_ARTWORK_STORAGE_DIR), created
+# here rather than left to Docker: a fresh named volume inherits the ownership and
+# mode of the image directory it covers, so a container running as a non-root user
+# would find a root-owned /data/artwork it cannot write. The app does not fail on
+# that — it logs the unusable root and falls back to the bounded temp cache — so
+# the mirror would just quietly not happen.
+RUN mkdir -p /data/artwork && chmod 1777 /data/artwork
+
 EXPOSE 5000
 ENV TMPDIR=/tmp/beetdeck
 

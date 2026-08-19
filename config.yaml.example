@@ -39,6 +39,14 @@ plugins:
   - autobpm
   - info
 
+musicbrainz:
+  # Already the beets default — written out as an anchor, not as a fix. beetDeck
+  # never raises it: its MusicBrainz genre source reads the release's genre lists
+  # itself, and the metadata sync strips genres out of the diff. `yes` here would
+  # make a rescan's `beet import` write MusicBrainz genres over whatever you
+  # fetched from Last.fm.
+  genres: no
+
 fetchart:
   auto: no
   high_resolution: yes

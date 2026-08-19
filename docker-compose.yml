@@ -24,6 +24,12 @@ services:
       BEETS_LIBRARY_DB: /data/beets/library.db
       # Music / import dir the app scans.
       BEETS_IMPORT_DIR: /music
+      # Permanent mirror for the cover-art gallery. EMPTY = off, and everything
+      # the gallery downloads goes to a size- and TTL-bounded cache under the
+      # container's temp dir instead — correct, just re-fetched after a restart.
+      # Set BEETDECK_ARTWORK_DIR=/data/artwork in .env to keep it in the volume
+      # mounted below; nothing else changes.
+      BEETS_ARTWORK_STORAGE_DIR: "${BEETDECK_ARTWORK_DIR:-}"
       TZ: "${TZ:-UTC}"
     volumes:
       # beets config (config.yaml) — provide your own; see README.
@@ -32,6 +38,10 @@ services:
       - "${BEETDECK_MUSIC_DIR:-./music}:/music"
       # Persistent app state — the beets SQLite DB lives here.
       - beetdeck_data:/data/beets
+      # Cover-art mirror. Always mounted, written only when BEETDECK_ARTWORK_DIR
+      # is set above — an unused named volume costs nothing, and mounting it
+      # unconditionally means turning the mirror on is one line in .env.
+      - beetdeck_artwork:/data/artwork
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5000/').status < 500 else 1)\""]
       interval: 30s
@@ -91,3 +101,4 @@ services:
 
 volumes:
   beetdeck_data:
+  beetdeck_artwork:

@@ -25,10 +25,15 @@ by something like Lidarr) and it becomes the tagging and browsing layer on top.
   separately.
 - **Identify albums** — match against MusicBrainz, compare candidates, preview
   exactly what will change, then confirm to write the tags into your files.
-- **Fetch genres** — look up genres from Last.fm with an old-vs-new preview.
+- **Fetch genres** — from Last.fm or MusicBrainz, with an old-vs-new preview.
 - **Get cover art** — pull artwork from the Cover Art Archive, iTunes, Amazon, or
   the local files; preview and confirm, or upload your own image. Saved as both a
   high-res file and an embedded thumbnail.
+- **Browse every cover the Archive has** — a gallery of all the scans the Cover
+  Art Archive holds for a release: front, back, booklet pages, the disc itself.
+  Open one full-screen, and make any of them the album's cover.
+- **Sync from MusicBrainz** — for an album you already identified, re-read its
+  release and apply what changed there since, field by field, from a preview.
 - **Manage lyrics** — synced or plain-text lyrics per track or for a whole album
   via lrclib, with an inline editor, online search, and a side-by-side diff before
   you save.
@@ -45,6 +50,12 @@ by something like Lidarr) and it becomes the tagging and browsing layer on top.
 - **Hand it to an AI agent** — an optional [MCP](https://modelcontextprotocol.io/)
   server lets Claude (or any MCP client) do the same work in conversation, with a
   preview-then-apply step on every change. Off by default; see below.
+
+### Every cover the Archive has
+
+Front, back, booklet pages, the disc — pick the one you want as the album's cover.
+
+<img src="assets/screenshots/artwork-gallery.png" alt="Cover Art Archive gallery" width="800">
 
 ### Identify against MusicBrainz
 
@@ -95,6 +106,7 @@ run **Full Scan** in the top bar to load your library into beetDeck.
 | `BEETDECK_HTTP_PORT`  | `8080`                  | Port the UI is served on              |
 | `BEETDECK_CONFIG_DIR` | `./config`              | Your beets config dir (holds `config.yaml`) |
 | `BEETDECK_MUSIC_DIR`  | `./music`               | Your music library / import folder    |
+| `BEETDECK_ARTWORK_DIR`| *(empty)*               | `/data/artwork` keeps the cover-art gallery's downloads |
 | `TZ`                  | `UTC`                   | Timezone for logs and timestamps      |
 
 Your beets database and app state persist in a Docker volume, so your work
@@ -104,6 +116,13 @@ under version control. That only holds while `statefile` points into
 `/data/beets`, as the example config does; drop that line and beets puts its
 import history in the config dir instead, and silently stops doing incremental
 rescans wherever it cannot write there.
+
+Artwork the gallery downloads is kept only if you ask for it. Set
+`BEETDECK_ARTWORK_DIR=/data/artwork` and it goes into the `beetdeck_artwork`
+volume, so opening the same gallery again never touches the Cover Art Archive;
+leave it empty and the images sit in a 512 MB / 7-day cache inside the container,
+re-fetched after an upgrade. Nothing prunes the mirror — `docker volume rm
+beetdeck_artwork` is how you reclaim it.
 
 ### MCP server (optional)
 
@@ -118,7 +137,7 @@ container from the same image, off by default:
 ```bash
 # in .env — both are required, the server refuses to start without them
 BEETDECK_MCP_TOKEN=$(openssl rand -hex 24)
-MUSICBRAINZ_USER_AGENT='beetDeck/0.3.0 ( you@example.com )'
+MUSICBRAINZ_USER_AGENT='beetDeck/0.4.0 ( you@example.com )'
 
 docker compose --profile mcp up -d
 ```

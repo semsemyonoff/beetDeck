@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- Write notes for the next release here. "Cut release" promotes this
      section to ## [X.Y.Z] - <date> and uses it as the release body. -->
 
+## [0.4.1] - 2026-10-31
+
 Patch release: beets 2.14.1 under the hood, and the SPA built with patched Vite
 and Vitest.
 
@@ -32,6 +34,7 @@ and Vitest.
 - Nothing to change. beets 2.14.1 adds no database migrations, so a library
   migrated by 0.4.0 opens as is and no new `library.db-before-*.bak` files
   appear. Config and `.env` are unchanged.
+
 
 ## [0.4.0] - 2026-08-19
 

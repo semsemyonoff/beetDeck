@@ -13,7 +13,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- Write notes for the next release here. "Cut release" promotes this
      section to ## [X.Y.Z] - <date> and uses it as the release body. -->
 
-## [0.4.1] - 2026-10-31
+Fix for 0.4.1, which does not work: use this release instead. Everything 0.4.1
+promised is here.
+
+### Fixed
+- **0.4.1 answered most API requests with an error.** The image was built with
+  spectree 3.0, a major release whose calling convention beetDeck did not yet
+  follow, so the library, search and most MCP tools failed. beetDeck now works
+  with spectree 2 and 3 alike, and the image is held below 4.
+
+### Upgrading
+- Coming from 0.4.0: nothing to change, same as for 0.4.1.
+- Running 0.4.1: move to 0.4.2. The failing requests were refused before
+  beetDeck handled them, so they changed nothing in the library.
+
+## [0.4.1] - 2026-10-31 [YANKED]
 
 Patch release: beets 2.14.1 under the hood, and the SPA built with patched Vite
 and Vitest.

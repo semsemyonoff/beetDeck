@@ -13,6 +13,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <!-- Write notes for the next release here. "Cut release" promotes this
      section to ## [X.Y.Z] - <date> and uses it as the release body. -->
 
+Patch release: beets 2.14.1 under the hood, and the SPA built with patched Vite
+and Vitest.
+
+### Changed
+- **beets 2.14.1.** Identification follows beets' new autotag API; matching,
+  cover art, genres, lyrics and MusicBrainz sync work as before. Two upstream
+  lyrics fixes come with it: LRC timestamps with millisecond precision are read
+  correctly, and LRCLib no longer offers an empty result when only synced lyrics
+  exist.
+
+### Security
+- **Vite 8.1.6 and Vitest 4.1.11** close the security advisories reported
+  against earlier versions. Both are build and test tooling: the SPA is built
+  with them, nothing in the running app changes.
+
+### Upgrading
+- Nothing to change. beets 2.14.1 adds no database migrations, so a library
+  migrated by 0.4.0 opens as is and no new `library.db-before-*.bak` files
+  appear. Config and `.env` are unchanged.
+
 ## [0.4.0] - 2026-08-19
 
 Fourth feature release, and it is about the artwork gallery: everything the
